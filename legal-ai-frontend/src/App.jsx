@@ -1,36 +1,16 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { createClient } from '@supabase/supabase-js';
 import { Upload, BookOpen, AlertTriangle, Coffee, FileText, CheckCircle2, Download, Copy, RefreshCw } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
-// ENV Variables (Set these in Vercel)
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "YOUR_SUPABASE_URL";
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "YOUR_SUPABASE_KEY";
-const supabase = createClient(supabaseUrl, supabaseKey);
+// ENV Variable (Set in Vercel or .env)
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
 
 export default function App() {
-  const [session, setSession] = useState(null);
   const [showDisclaimer, setShowDisclaimer] = useState(true);
   const [activeTab, setActiveTab] = useState('analyze');
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-  }, []);
-
-  const handleGoogleSignIn = async () => {
-    try {
-      await supabase.auth.signInWithOAuth({ provider: 'google' });
-    } catch (error) {
-      toast.error("Failed to sign in");
-    }
-  };
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden bg-gradient-to-br from-gray-50 to-blue-50">
@@ -38,11 +18,14 @@ export default function App() {
       <AnimatePresence>
         {showDisclaimer && (
           <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
           >
             <motion.div 
-              initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }}
+              initial={{ scale: 0.9, y: 20 }} 
+              animate={{ scale: 1, y: 0 }}
               className="bg-white rounded-2xl p-8 max-w-lg shadow-2xl border-l-8 border-yellow-500"
             >
               <div className="flex items-center gap-3 mb-4">
@@ -69,12 +52,12 @@ export default function App() {
       {/* Navbar */}
       <nav className="glass-effect sticky top-0 z-40 px-6 py-4 flex justify-between items-center">
         <div className="flex items-center gap-3">
-            <div className="bg-blue-600 p-2 rounded-lg">
-              <FileText className="text-white w-6 h-6" />
-            </div>
-            <h1 className="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-teal-600 hidden sm:block">
-              LexIndia AI
-            </h1>
+          <div className="bg-blue-600 p-2 rounded-lg">
+            <FileText className="text-white w-6 h-6" />
+          </div>
+          <h1 className="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-teal-600 sm:block">
+            LexIndia AI
+          </h1>
         </div>
         <div className="flex items-center gap-4">
           <a 
@@ -85,54 +68,53 @@ export default function App() {
           >
             <Coffee className="w-4 h-4" /> <span className="hidden sm:inline">Buy me a chai</span>
           </a>
-          {session ? (
-            <button onClick={() => supabase.auth.signOut()} className="text-sm font-medium text-gray-600 hover:text-red-600 px-2">
-              Sign Out
-            </button>
-          ) : (
-            <button onClick={handleGoogleSignIn} className="bg-gray-900 text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-gray-800 transition-all shadow-md">
-              Sign in
-            </button>
-          )}
         </div>
       </nav>
 
       {/* Main Content */}
-      <main className="flex-1 max-w-5xl mx-auto w-full mt-10 p-4 mb-20">
-        {!session ? (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center py-20">
-            <div className="inline-block p-4 bg-blue-100 rounded-full mb-6">
-              <CheckCircle2 className="w-16 h-16 text-blue-600" />
-            </div>
-            <h2 className="text-5xl font-black mb-6 text-gray-900 tracking-tight">Democratizing <span className="text-blue-600">Indian Law</span> with AI</h2>
-            <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed">
-              Upload complex legal notices, GST documents, FIRs, or court orders. Our multi-agent system reads, categorizes, and breaks down the legalese into simple steps.
-            </p>
-            <button onClick={handleGoogleSignIn} className="bg-blue-600 text-white px-8 py-4 rounded-full text-lg font-bold shadow-xl hover:bg-blue-700 hover:-translate-y-1 transition-all">
-              Start Using for Free
-            </button>
-          </motion.div>
-        ) : (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-            {/* Tabs */}
-            <div className="flex gap-2 mb-8 justify-center bg-white p-1.5 rounded-2xl w-max mx-auto shadow-sm border border-gray-100">
-              <button 
-                onClick={() => setActiveTab('analyze')}
-                className={`px-6 py-3 rounded-xl font-semibold flex items-center gap-2 transition-all ${activeTab === 'analyze' ? 'bg-blue-600 shadow-md text-white' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'}`}
-              >
-                <Upload className="w-5 h-5" /> Analyze Document
-              </button>
-              <button 
-                onClick={() => setActiveTab('explain')}
-                className={`px-6 py-3 rounded-xl font-semibold flex items-center gap-2 transition-all ${activeTab === 'explain' ? 'bg-teal-600 shadow-md text-white' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'}`}
-              >
-                <BookOpen className="w-5 h-5" /> Ask Law Explainer
-              </button>
-            </div>
+      <main className="flex-1 max-w-5xl mx-auto w-full mt-6 p-4 mb-20">
+        {/* Header Hero Section */}
+        <div className="text-center py-6 mb-4">
+          <h2 className="text-4xl md:text-5xl font-black mb-4 text-gray-900 tracking-tight">
+            Democratizing <span className="text-blue-600">Indian Law</span> with AI
+          </h2>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
+            Upload complex legal notices, GST documents, FIRs, or court orders. Our multi-agent system reads, categorizes, and breaks down the legalese into simple steps.
+          </p>
+        </div>
 
-            {activeTab === 'analyze' ? <DocumentAnalyzer backendUrl={BACKEND_URL} /> : <LawExplainer backendUrl={BACKEND_URL} />}
-          </motion.div>
-        )}
+        {/* Navigation Tabs */}
+        <div className="flex gap-2 mb-8 justify-center bg-white p-1.5 rounded-2xl w-max mx-auto shadow-sm border border-gray-100">
+          <button 
+            onClick={() => setActiveTab('analyze')}
+            className={`px-6 py-3 rounded-xl font-semibold flex items-center gap-2 transition-all ${
+              activeTab === 'analyze' 
+                ? 'bg-blue-600 shadow-md text-white' 
+                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+            }`}
+          >
+            <Upload className="w-5 h-5" /> Analyze Document
+          </button>
+          <button 
+            onClick={() => setActiveTab('explain')}
+            className={`px-6 py-3 rounded-xl font-semibold flex items-center gap-2 transition-all ${
+              activeTab === 'explain' 
+                ? 'bg-teal-600 shadow-md text-white' 
+                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+            }`}
+          >
+            <BookOpen className="w-5 h-5" /> Ask Law Explainer
+          </button>
+        </div>
+
+        {/* Tab Content */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} key={activeTab}>
+          {activeTab === 'analyze' ? (
+            <DocumentAnalyzer backendUrl={BACKEND_URL} />
+          ) : (
+            <LawExplainer backendUrl={BACKEND_URL} />
+          )}
+        </motion.div>
       </main>
     </div>
   );
@@ -143,7 +125,7 @@ function DocumentAnalyzer({ backendUrl }) {
   const [loadingState, setLoadingState] = useState(''); // '', 'uploading', 'ocr', 'classifying', 'extracting', 'analyzing', 'simplifying'
   const [result, setResult] = useState(null);
 
-  const onDrop = useCallback(acceptedFiles => {
+  const onDrop = useCallback((acceptedFiles) => {
     if (acceptedFiles.length > 0) {
       setFile(acceptedFiles[0]);
       setResult(null);
@@ -170,7 +152,7 @@ function DocumentAnalyzer({ backendUrl }) {
     try {
       setLoadingState('uploading');
       
-      // Artificial delay for better UX of agent progress
+      // Artificial delay progression for multi-agent feedback
       setTimeout(() => setLoadingState('ocr'), 1500);
       setTimeout(() => setLoadingState('classifying'), 3500);
       setTimeout(() => setLoadingState('extracting'), 5500);
@@ -218,7 +200,9 @@ function DocumentAnalyzer({ backendUrl }) {
       {/* Drag & Drop Zone */}
       <div 
         {...getRootProps()} 
-        className={`border-3 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-all ${isDragActive ? 'border-blue-500 bg-blue-50 scale-105' : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'}`}
+        className={`border-3 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-all ${
+          isDragActive ? 'border-blue-500 bg-blue-50 scale-105' : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
+        }`}
       >
         <input {...getInputProps()} />
         <Upload className={`w-12 h-12 mx-auto mb-4 ${isDragActive ? 'text-blue-500' : 'text-gray-400'}`} />
@@ -359,7 +343,8 @@ function LawExplainer({ backendUrl }) {
       
       <div className="relative">
         <textarea 
-          value={query} onChange={(e) => setQuery(e.target.value)}
+          value={query} 
+          onChange={(e) => setQuery(e.target.value)}
           placeholder='e.g., "What is Section 138 of the Negotiable Instruments Act?" or "Explain Anticipatory Bail under BNSS."'
           className="w-full p-6 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-teal-500/20 focus:border-teal-500 focus:bg-white transition-all outline-none mb-6 min-h-[160px] resize-none text-lg"
         />
